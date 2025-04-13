@@ -1,7 +1,8 @@
 require("dotenv").config();
-const Quote = require("./quotes.json");
-const { Client, IntentsBitField, quote } = require("discord.js");
+const { Client, IntentsBitField } = require("discord.js");
+const quotesData = require("./quotes.json");
 
+// Create the client with required intents
 const client = new Client({
   intents: [
     IntentsBitField.Flags.Guilds,
@@ -10,60 +11,51 @@ const client = new Client({
     IntentsBitField.Flags.MessageContent,
   ],
 });
- 
 
-// Access the quotes array
-const quotesArray = Quote.quotes;
-
-let time = new Date();
-client.on("ready", () => {
-  console.log(`✅ Logged in as ${client.user.tag}!`);
+// Ready Event
+client.once("ready", () => {
+  console.log(`✅ Logged in as ${client.user.tag}`);
 });
 
+// Message Handler
 client.on("messageCreate", (message) => {
-  console.log(`User:${message.author.username} wrote ${message.content}`);
-
+  // Ignore bot messages
   if (message.author.bot) return;
-  if (message.content === "hello") {
-    message.reply({
-      content: "hi from bot",
-    });
+
+  const content = message.content.toLowerCase().trim();
+
+  // Command: hello
+  if (content === "hello") {
+    return message.reply("hi from bot");
   }
 
-  // Inspire from quote
+  // Command: inspire me
+  if (content === "inspire me") {
+    const quotesArray = quotesData.quotes;
+    const randomIndex = Math.floor(Math.random() * quotesArray.length);
+    const randomQuote = quotesArray[randomIndex];
 
-  if (message.content === "inspire me") {
-    // Accessing each quotes
-    let randomQuotesIndex = [Math.floor(Math.random() * quotesArray.length)];
-    let randomQuote= quotesArray[randomQuotesIndex];
-    if (randomQuote.quote.trim()) {
-      // Print the random quote
-      message.reply(`"${randomQuote.quote}" - ${randomQuote.author}`);
+    if (randomQuote && randomQuote.quote.trim()) {
+      return message.reply(`"${randomQuote.quote}" - ${randomQuote.author}`);
     } else {
-      console.log("Error: Empty quote content.");
+      return message.reply("Sorry, couldn't find a quote right now.");
     }
-    // message.reply(quotesArray[randomQuotesIndex]);
   }
 
+  // Command: what time
+  if (content === "what time") {
+    const now = new Date();
+    let hours = now.getHours();
+    const minutes = now.getMinutes().toString().padStart(2, "0");
+    const seconds = now.getSeconds().toString().padStart(2, "0");
+    const meridian = hours < 12 ? "AM" : "PM";
 
+    // Convert to 12-hour format
+    hours = hours % 12 || 12;
 
-  // What time
-  // Getting time component
-  let hours = time.getHours();  
-  const minutes = time.getMinutes();
-  const second = time.getSeconds();
-
-  // Determing 'A.M.' or 'P.M.'
-  const meridian = hours <= 12 ? "AM" : "PM";
-  // converting to 12 hr format
-  hours = hours % 21 || 12;
-
-  if (message.content === "what time") {
-    message.reply(
-      // `The time is(hh:mm:ss) --> ${time.getHours()}:${time.getMinutes()}:${time.getSeconds()}`
-      `The time is  ${hours}:${minutes}:${second} ${meridian}`
-    );
+    return message.reply(`The time is ${hours}:${minutes}:${seconds} ${meridian}`);
   }
 });
 
+// Login to Discord
 client.login(process.env.TOKEN);
